@@ -15,7 +15,6 @@
       return;
     }
     var t = String(document.title);
-    // Gmail - Inbox (1700) - jeffpalm@gmail.com
     var res = t.match(/([^\(]+)(\(\d+\))(.*)/);
     if (res) {
       ignoreNextChange = true;
