@@ -1,0 +1,1 @@
+javascript:(function(){var q=[];q.push(document.body);var str='';while(q.length>0){var el=q.pop();if(el.nodeName==='#text'){var s=el.textValue;str +=':' + s;}var els=el.childNodes;if(els){for(var i in els)q.push(els[i]);}}console.log(str);})();

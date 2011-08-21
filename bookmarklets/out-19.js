@@ -1,0 +1,1 @@
+javascript:functionvar q=[];q.pushdocument.body;whileq.length > 0var el=q.pop;ifel.nodeName==='#text'var s=el.innerHTML;console.logs;var els=el.childNodes;ifelsforvar i in elsq.pushels[i];;

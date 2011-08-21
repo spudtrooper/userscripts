@@ -2,12 +2,9 @@
 // @name          Image reddit preview
 // @namespace     http://jeffpalm.com/imagereddit
 // @description	  Shows a preview of reddit images underneath the article
+//                Copyright 2006 Jeffrey Palm.
 // @include       http://*reddit.com/*
 // ==/UserScript==
-
-/*
- * Copyright 2006 Jeffrey Palm.
- */
 
 var VERSION = 0.1;
 

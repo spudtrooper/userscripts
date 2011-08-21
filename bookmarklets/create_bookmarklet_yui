@@ -1,0 +1,8 @@
+#!/bin/sh
+
+if [[ "${YUI_COMPRESSOR}" = "" ]]; then
+    echo "Please set YUI_COMPRESSOR to the path to the YUI compressor jar"
+    exit 1
+fi
+
+echo "javascript:"`java -jar ${YUI_COMPRESSOR} "$@"`

@@ -1,0 +1,96 @@
+#!/usr/bin/env ruby
+#
+# Creates and copies javascript to be inserted into the address bar of
+# a browser.  To use fully you'll want to download a program to copy
+# input files to the clipboard, mine is here:
+#
+#  http://jeffpalm.com/copytoclipboard/
+#
+# It should be on your PATH at 'copytoclipboard' (no quotes)
+#
+
+# Options
+$verbose = false
+$html = false
+
+# Write to STDERR
+def e(s)
+  STDERR.puts s
+  STDERR.flush
+end
+
+# Verobse debug
+def v(s)
+  e s if $verbose
+end
+
+def print_help
+  e 'Usage: ' + File.basename(__FILE__) + ' [ <option> ]? <file>+'
+  e 'where options include'
+  e '  -o    overwrite out.js'
+  e '  -h    print this message'
+  e '  -v    be loud'
+end
+
+if ARGV.empty?
+  print_help
+  exit 0
+end
+
+# Allow the -o to overwrite the outfile
+infiles = []
+overwrite = false
+ARGV.each do |arg|
+  if arg == '-o'
+    overwrite = true
+  elsif arg == '-h'
+    print_help
+    exit 0
+  elsif arg == '-v'
+    $verbose = true
+  elsif arg == '-html'
+    $html = true
+  else
+    infiles << arg
+  end
+end
+
+files = ''
+out = STDOUT
+out.print '<a href="' if $html 
+out.print 'javascript:'
+infiles.each do |infile|
+  files += infile + ' '
+  in_comments = false
+  IO.foreach infile do |line|
+    line.strip!
+    line = line.gsub /\s*=\s*/, '='
+    line = line.gsub /\s*>\s*/, '>'
+    line = line.gsub /\s*<\s*/, '<'
+    line = line.gsub /\s*\(\s*/,'('
+    line = line.gsub /\s*\)\s*/,')'
+    line = line.gsub /\s*\{\s*/,'{'
+    line = line.gsub /\s*\}\s*/,'}'
+    line = line.gsub /^\s+/, ''              
+    line = line.gsub /\s+$/, ''              
+    line = line.gsub /\/\/.*/, ''             # remove line comments
+    if in_comments
+      if /\*\//.match line
+        line = line.gsub /.*\*\//,'' # end multi-line comments
+        in_comments = false
+      else
+        line = ''
+      end
+    end
+    if /\/\*/.match line
+      in_comments = true
+      line = line.gsub /\/\*.*/, ''  # start multi-line comments
+    end
+    next if !line || line == ''
+    line += ';' if /;$/ !~ ';'
+    out.print line
+  end
+end
+out.print '">' + files.strip + '</a>' if $html
+v 'Wrote ' + files + '-> ' + out.to_s
+out.puts

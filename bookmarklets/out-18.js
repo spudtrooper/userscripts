@@ -1,0 +1,1 @@
+javascript:$1function$1$1$1var q=[];q.push$1document.body$1;while$1q.length > 0$1$1var el=q.pop$1$1;if$1el.nodeName==='#text'$1$1var s=el.innerHTML;console.log$1s$1;$1var els=el.childNodes;if$1els$1$1for$1var i in els$1q.push$1els[i]$1;$1$1$1$1$1$1;
