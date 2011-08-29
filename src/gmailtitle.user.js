@@ -7,9 +7,38 @@
 
 (function() {
 
+  const FUDGE_KEY = 'fudge.factor';
   var ignoreNextChange = false;
 
+  /** 
+   * Set this fudge factor to the positive integer number of un-read
+   * messages that you don't care about so that the title can show 0
+   * messages, even if you have more than that. 
+   */
+  function getTotalFudgeFactor() {
+    var fudgeKey = FUDGE_KEY;
+    var res = 0;
+    try {
+      res = parseInt(localStorage.getItem(FUDGE_KEY));
+      if (res < 0) {
+	note('You called localStorage.setItem("' + 
+	     fudge_key + '",' + res + ') with an invalid value.' +
+	     'Please call localStorage.setItem("' + fudgeKey + '",v) ' +
+	     'where \'v\' >= 0');
+	return 0;
+      }
+    } catch (e) {}
+    return res;
+  }
+
+  function note(str) {
+    try {
+      console.log('[gmail little] ' + str);
+    } catch (e) {}
+  }
+
   function changeTitle() {
+    note('[changeTitle] enter');
     if (ignoreNextChange) {
       ignoreNextChange = false;
       return;
@@ -18,7 +47,15 @@
     var res = t.match(/([^\(]+)(\(\d+\))(.*)/);
     if (res) {
       ignoreNextChange = true;
-      var title = res[2].replace(/\D/g,"") + " - " + res[1] + res[3];
+      var fudge = getTotalFudgeFactor();
+      var realTotal = parseInt(res[2].replace(/\D/g,""));
+      var total = realTotal;
+      if (fudge > 0) {
+	total -= fudge;
+	note('Fudging the total with fudge factor \'' + fudge + 
+	     '\' from ' + realTotal + ' -> ' + total);
+      }
+      var title = total + " - " + res[1] + res[3];
       document.title = title;
     }
   }
