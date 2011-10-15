@@ -98,7 +98,7 @@ function main() {
 	function keyUp(e) {
 		if (e.keyCode == 86) isShiftPressed = false;
 	}
-	window.addEventListener('keydown', keyDown, true);
+window.addEventListener('keydown', keyDown, true);
 	window.addEventListener('keyup', keyUp, true);
 
 }

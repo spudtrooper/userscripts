@@ -127,13 +127,15 @@
     }
     var html = tab.innerHTML;
     tab.parentNode.removeChild(tab);
-
+    ///
     // Insert this into the correct table rather than appending so we
     // keep the order
+    //
     var into = document.getElementById(id);
     into.innerHTML = html;
-
+    //
     // Change all links to point to the target url
+    //
     var as = into.getElementsByTagName('a');
     for (var i in as) {
       as[i].href = url;
@@ -143,7 +145,11 @@
   function getDivId(pageNum) {
     return '_div_' + pageNum;
   }
-  
+
+  /**
+   * Append a paginated section into the DOM as a div, and allow the
+   * javascript to render.
+   */
   function addPageScript(url,pageNum,text,into) {
     var html = text;
     html = html.replace(/.*<body[^>]*>/im,'');
@@ -153,6 +159,10 @@
     div.id = id;
     div.innerHTML = html;
     setTimeout(function() {
+      //
+      // Wait for the elements to render, then extract the innards and
+      // create a new table element in the top left
+      //
       extractFirstLine(url,id,div,into);
     },1000);
   }
@@ -241,6 +251,8 @@
       return;
     }
     var target = createLightBoxTarget();
+
+    // Create the table elements, so we can add them sorted
     createTargetTables(totalNumItems,target);
     addPageTables(loc,totalNumItems,target);
   }

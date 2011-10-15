@@ -16,23 +16,23 @@ var VERSION = 0.1;
 // --------------------------------------------------
 
 function $n(tag,on) {
-	var e = document.createElement(tag);
-	if (on) on.appendChild(e);
-	return e;
+  var e = document.createElement(tag);
+  if (on) on.appendChild(e);
+  return e;
 }
 
 function $t(text,on) {
-	var e = document.createTextNode(text);
-	if (on) on.appendChild(e);
-	return e;
+  var e = document.createTextNode(text);
+  if (on) on.appendChild(e);
+  return e;
 }
 
 function insertBefore(newNode,target) {
-	// http://lists.xml.org/archives/xml-dev/200201/msg00873.html
+  // http://lists.xml.org/archives/xml-dev/200201/msg00873.html
   var parent   = target.parentNode;
-	var refChild = target; //target.nextSibling;	
-	if(refChild) parent.insertBefore(newNode, refChild);
-	else parent.appendChild(newNode);	
+  var refChild = target; //target.nextSibling;	
+  if(refChild) parent.insertBefore(newNode, refChild);
+  else parent.appendChild(newNode);	
 }
 
 // --------------------------------------------------
@@ -47,20 +47,20 @@ function changeSizes() {
   //
   // build a list of scores and titles
   //
-	var trs = document.getElementsByTagName("tr");
-	var scoresAndTitles = new Array();
-	var debug = true;
+  var trs = document.getElementsByTagName("tr");
+  var scoresAndTitles = new Array();
+  var debug = true;
   var min;
   var max;
-	for (var i=0; i<trs.length; i++) {
-		var tr = trs[i];
+  for (var i=0; i<trs.length; i++) {
+    var tr = trs[i];
 
-		// make sure we're in the right table
-		if (!tr.parentNode) continue;
-		if (!tr.parentNode.id == "siteTable") continue;
+    // make sure we're in the right table
+    if (!tr.parentNode) continue;
+    if (!tr.parentNode.id == "siteTable") continue;
 
-		// decide which TR this is
-		if (tr.id && tr.id.match(/^site.*/)) {
+    // decide which TR this is
+    if (tr.id && tr.id.match(/^site.*/)) {
       scoreId = tr.id.replace(/site/,'score');
       scoreSpan = document.getElementById(scoreId);
       if (scoreSpan) {
@@ -94,8 +94,9 @@ function changeSizes() {
     var title = scoresAndTitles[i++];
     var size = m*score + b;    
     title.style.fontSize = size + "em";
-	}
+  }
 }
+
 
 main();
 

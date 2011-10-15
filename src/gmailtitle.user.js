@@ -44,7 +44,7 @@
       return;
     }
     var t = String(document.title);
-    var res = t.match(/([^\(]+)(\(\d+\))(.*)/);
+    var res = t.match(/([^\(]+)(\([\d,]+\))(.*)/);
     if (res) {
       ignoreNextChange = true;
       var fudge = getTotalFudgeFactor();
