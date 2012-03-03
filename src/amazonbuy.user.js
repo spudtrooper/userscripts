@@ -161,12 +161,17 @@
     removeAsin: function(asin) {
       var asins = this.getAsins();
       var newAsins = [];
+      var changed = false;
       for (var i in asins) {
 	if (asins[i] !== asin) {
 	  newAsins.push(asins[i]);
+	} else {
+	  changed = true;
 	}
       }
-      this._saveAsins(newAsins);
+      if (chaged) {
+	this._saveAsins(newAsins);
+      }
     },
 
     /** String[] -> Void */
@@ -219,8 +224,12 @@
     var numAsinsSpan = createElement('span',h1);
     numAsinsSpan.innerHTML = '-';
     createTextElement(')',h1);
+    createElement('br',el);
+    var msgSpanStyle = {
+      'fontStyle': 'italic',
+    };
+    var msgSpan = createElement('div',el,msgSpanStyle);
     var text = createElement('textarea',el,textStyle);
-    text.id = text.name = '_view_text';
     text.rows = '3';
     var row = createElement('div',el);
     var thiz = this;
@@ -252,6 +261,7 @@
     this.ul = ul;
     this.text = text;
     this.numAsinsSpan = numAsinsSpan;
+    this.msgSpan = msgSpan;
     this.addButton = addButton;
     this.clearButton = clearButton;
     this.goButton = goButton;
@@ -263,6 +273,11 @@
   }
 
   View.prototype = {
+
+    /** String -> Void */
+    showMessage: function(msg) {
+      this.msgSpan.innerHTML = msg;
+    },
 
     /** String[] -> Void */
     updateViewWithAsins: function(asins) {
@@ -395,7 +410,7 @@
 	// We only want to do this on the upsell page, because that
 	// means that we just added something to the cart
 	if (loc.match(/\/gp\/cart\/view-upsell.html/)) {
-	  this._maybeAddAnotherAsin();
+	  this._maybeAddAnotherAsin('Done');
 	}
       }
     },
@@ -404,9 +419,7 @@
       var done = true;
       var asins = this.controller.getModel().getAsins();
       if (asins.length === 0) {
-	if (!!emptyMsg) {
-	  this.controller.showMessage(emptyMsg);
-	}
+	this.controller.showMessage(emptyMsg);
 	return;
       }
       var asin = asins.shift();
@@ -428,7 +441,7 @@
       var ips = document.getElementsByTagName("INPUT");
       var span = null;
       for (var i=0; i<ips.length; i++) {
-	if (ips[i].alt && ips[i].alt === "Add to Shopping Cart") {
+	if (!!ips[i].alt && ips[i].alt === "Add to Shopping Cart") {
 	  span = ips[i];
 	  break;
 	}
@@ -445,7 +458,7 @@
   
   function main() {
     var view = new View();
-    var model=  new Model();
+    var model =  new Model();
     var controller = new Controller(model,view);
     var app = new App(controller);
     app.go();

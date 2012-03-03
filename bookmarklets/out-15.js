@@ -1,1 +1,0 @@
-javascript:#{$1}function#{$1}#{$1}#{$1}var q=[];q.push#{$1}document.body#{$1};while#{$1}q.length > 0#{$1}#{$1}var el=q.pop#{$1}#{$1};if#{$1}el.nodeName==='#text'#{$1}#{$1}var s=el.innerHTML;console.log#{$1}s#{$1};#{$1}var els=el.childNodes;if#{$1}els#{$1}#{$1}for#{$1}var i in els#{$1}q.push#{$1}els[i]#{$1};#{$1}#{$1}#{$1}#{$1}#{$1}#{$1};

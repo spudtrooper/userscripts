@@ -1,1 +1,0 @@
-<a href="javascript:(function() {var q=[];a.push(document.body);while (q.length > 0) {var el=q.pop();alert(el);}})();">links.js</a>
