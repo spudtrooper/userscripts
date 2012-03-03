@@ -121,7 +121,7 @@
 	}
 	var xmlDoc = new DOMParser().parseFromString(text,"text/xml");	
 	var events = xmlDoc.getElementsByTagName("event");
-	if (!events || events.length == 0) return;
+	if (!events) return;
 	var target = document.getElementsByClassName('info_box metadata')[0];
 	if (!target) {
 	    log("Can't find a target node, please report to jeff@jeffpalm.com");
@@ -145,35 +145,39 @@
 	h4.innerHTML = 'shows';
 	var p = $n('p',div);
 	p.className = 'info_title';
-	for (var i=0, N=events.length; i<N; i++) {
-	    var event = events[i];
-	    var venue_url = getValue(event,'venue_url');
-	    var venue_name = getValue(event,'venue_name');
-	    var venue_address = getValue(event,'venue_address');
-	    var city_name = getValue(event,'city_name');
-	    var url = getValue(event,'url');
-	    var start_time = getValue(event,'start_time');
-	    var region_abbr = getValue(event,'region_abbr');
+	if (events.length == 0) {
+	    $t('none',p);
+	} else {
+	    for (var i=0, N=events.length; i<N; i++) {
+		var event = events[i];
+		var venue_url = getValue(event,'venue_url');
+		var venue_name = getValue(event,'venue_name');
+		var venue_address = getValue(event,'venue_address');
+		var city_name = getValue(event,'city_name');
+		var url = getValue(event,'url');
+		var start_time = getValue(event,'start_time');
+		var region_abbr = getValue(event,'region_abbr');
 
-	    log('venue_url='+venue_url);
-	    log('venue_name='+venue_name);
-	    log('venue_address='+venue_address);
-	    log('city_name='+city_name);
-	    log('url='+url);
-	    log('start_time='+start_time);
-	    log('region_abbr='+region_abbr);
+		log('venue_url='+venue_url);
+		log('venue_name='+venue_name);
+		log('venue_address='+venue_address);
+		log('city_name='+city_name);
+		log('url='+url);
+		log('start_time='+start_time);
+		log('region_abbr='+region_abbr);
 
-	    var newEl = $n('div',p);
-	    var newTitle = $n('a',newEl);
-	    newTitle.innerHTML = venue_name;
-	    newTitle.href = url;
-	    br(newEl);
-	    var newLoc = city_name;
-	    if (!!region_abbr) newLoc += ', ' + region_abbr;
-	    $t(newLoc,newEl);
-	    br(newEl);
-	    $t(formatDate(start_time),newEl);
-	    if (i<N-1) br(p);
+		var newEl = $n('div',p);
+		var newTitle = $n('a',newEl);
+		newTitle.innerHTML = venue_name;
+		newTitle.href = url;
+		br(newEl);
+		var newLoc = city_name;
+		if (!!region_abbr) newLoc += ', ' + region_abbr;
+		$t(newLoc,newEl);
+		br(newEl);
+		$t(formatDate(start_time),newEl);
+		if (i<N-1) br(p);
+	    }
 	}
     }
 
@@ -278,7 +282,7 @@
     }
 
     function getApiKey() {
-	return get('eventful.api.key');
+	return 'swpJJKRsqbWQg6SZ';
     }
     
     function main() {
