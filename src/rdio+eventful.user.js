@@ -148,8 +148,22 @@
 	if (events.length == 0) {
 	    $t('none',p);
 	} else {
-	    for (var i=0, N=events.length; i<N; i++) {
-		var event = events[i];
+
+	    // Sort the events, so create a normal array from the node
+	    // list and sort it according to date
+	    var sortedEvents = []
+	    for (var i=0; i<events.length; i++) {
+		sortedEvents.push(events[i]);
+	    }
+	    sortedEvents.sort(function(e1,e2) {
+		var start_time1 = getValue(e1,'start_time');
+		var start_time2 = getValue(e2,'start_time');
+		return start_time1 > start_time2;
+	    });
+	    log('Found ' + sortedEvents.length + ' events');
+	    
+	    for (var i=0, N=sortedEvents.length; i<N; i++) {
+		var event = sortedEvents[i];
 		var venue_url = getValue(event,'venue_url');
 		var venue_name = getValue(event,'venue_name');
 		var venue_address = getValue(event,'venue_address');
