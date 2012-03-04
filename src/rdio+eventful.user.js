@@ -8,12 +8,6 @@
 
 (function() {
 
-    const CHECK_ARTIST_PERIOD = 3000;
-    const LAST_SEARCH_KEY = 'last.search';
-    const SEARCH_KEY = 'search';
-
-    const INSTALL_LINK_ID = 'rdio_shows_install_link';
-
     // ----------------------------------------------------------------------
     // Event notifier
     // ----------------------------------------------------------------------
@@ -29,7 +23,7 @@
 	},
 	notifyListeners: function(value) {
 	    var cbs = this.callbacks;
-	    log("notify " + cbs.length + " [" + this.name + "](" + value + ")");
+	    log('notify ' + cbs.length + ' [' + this.name + '](' + value + ')');
 	    for (var i=0; i<cbs.length; i++) {
 		cbs[i](value);
 	    }
@@ -40,7 +34,26 @@
     // Misc stuff
     // ----------------------------------------------------------------------
 
+    /*
+      An EventfulEvent is a Hash
+      { 
+      String venue_url,
+      String venue_name,
+      String venue_address,
+      String city_name,
+      String url,
+      String start_time,
+      String region_abbr,
+      }
+    */
+
     function formatDate(date) {
+	var res = formatDateHelper(date);
+	log('formatDate: ' + date + ' -> ' + res);
+	return res;
+    }
+    
+    function formatDateHelper(date) {
 	// 2012-03-06 20:00:00
         var res = date.match(/\d+-(\d+)-(\d+) (\d+):(\d+)/);
 	if (!!res) {
@@ -65,8 +78,7 @@
 		time += ':' + mins;
 	    }
 	    time += amPm;
-	    return mon + ' ' + day + ' @ ' + time;
-	    
+	    return mon + ' ' + day + ' @ ' + time;    
 	}
 	return date;
     }
@@ -92,7 +104,9 @@
     function getXMLValue(el,nodeName) {
 	var els = el.getElementsByTagName(nodeName);
 	if (!els || els.length == 0) return null;
-	return els[0].childNodes[0].nodeValue;
+	var res = els[0].childNodes[0].nodeValue;
+	log(nodeName + ' -> ' + res);
+	return res;
     }
 
     function massage(s) {
@@ -151,17 +165,14 @@
     }
 
     // ----------------------------------------------------------------------
-    // Eventful.com
+    // Eventful: eventful.com interface
     // ----------------------------------------------------------------------
-    function Eventful(app) {
-	this.app = app;
-    }
+
+    function Eventful() {}
+    
     Eventful.prototype = {
 	
-	getApiKey: function() {
-	    return ;
-	},
-
+	/** String String (String -> Void) */
 	search: function(artist,loc,f) {
 	    var appKey = 'swpJJKRsqbWQg6SZ';
 	    var url = 'http://api.eventful.com/rest/events/search'
@@ -171,7 +182,51 @@
 		+ '&date=Future';
 	    ajax(url,f);
 	},
+
+	/**
+	 * String -> List(EventfulEvent)
+	 *
+	 * Transforms the XML text into a list of EventfulEvent.
+	 */
+	parseEventfulEventsFromText: function(text) {
+	    var xmlDoc = new DOMParser().parseFromString(text,"text/xml");	
+	    var events = xmlDoc.getElementsByTagName("event");
+	    
+	    var res = [];
+
+	    if (!events || events.length == 0) return res;
+	    
+	    // Sort the events, so create a normal array from the node
+	    // list and sort it according to date
+	    var sortedEvents = []
+	    for (var i=0; i<events.length; i++) {
+		sortedEvents.push(events[i]);
+	    }
+	    sortedEvents.sort(function(e1,e2) {
+		var start_time1 = getXMLValue(e1,'start_time');
+		var start_time2 = getXMLValue(e2,'start_time');
+		return start_time1 > start_time2;
+	    });
+	    log('Found ' + sortedEvents.length + ' events');
+	    
+	    // Turn the XML text into hashes
+	    for (var i in sortedEvents) {
+		var event = sortedEvents[i];
+		var e = {
+		    venue_url: getXMLValue(event,'venue_url'),
+		    venue_name: getXMLValue(event,'venue_name'),
+		    venue_address: getXMLValue(event,'venue_address'),
+		    city_name: getXMLValue(event,'city_name'),
+		    url: getXMLValue(event,'url'),
+		    start_time: getXMLValue(event,'start_time'),
+		    region_abbr: getXMLValue(event,'region_abbr')
+		};
+		res.push(e);
+	    }
+	    return res;
+	},
 	
+	/** -> String */
 	getCurrentUsername: function() {
 	    var tits = document.getElementsByClassName('title');
 	    for (var i=0; i<tits.length; i++) {
@@ -182,32 +237,28 @@
 	    }
 	    return null;
 	}
-
     };
 
     // ----------------------------------------------------------------------
-    // Rd.io
+    // Rdio: rd.io interface
     // ----------------------------------------------------------------------
 
-    function Rdio(app) {
-	this.app = app;
-    }
+    function Rdio() {}
 
     Rdio.prototype = {
 	
+	/** -> String */
 	findCurrentLocation: function() {
 	    var divs = document.getElementsByClassName("location");
-	    log("divs="+divs);
-	    if (!divs) return null;
-	    if (divs.length == 0) return null;
-	    return divs[0].innerHTML;
+	    return (!divs || divs.length == 0) ? null : divs[0].innerHTML;
 	},
 
+	/** -> {String artist, String album} */
 	getArtistAndAlbum: function () {
 	    var hash = document.location.hash.replace(/#/,'');
-	    var res;
 	    var artist = null;
 	    var album = null;
+	    var res;
 	    if (res = hash.match(/\/artist\/([^\/]+)\/album\/([^\/]+)/)) {
 		artist = res[1];
 		album = res[2];
@@ -224,14 +275,15 @@
     // Storage
     // ----------------------------------------------------------------------
 
-    function Storage() {}
-    
-    const LOCAL_STORAGE_PREFIX = '*rdio.shows*';
+    function Storage(prefix) {
+	this.prefix = prefix;
+    }
+
     Storage.prototype = {
 
 	get: function(key,defaultValue) {
 	    try {
-		var res = localStorage[LOCAL_STORAGE_PREFIX + key];
+		var res = localStorage[this.prefix + key];
 		if ((!!res && res != 'null') || !defaultValue) {
 		    return res;
 		}
@@ -241,30 +293,44 @@
 
 	set: function(key,value) {
 	    try {
-		localStorage[LOCAL_STORAGE_PREFIX + key] = value;
+		localStorage[this.prefix + key] = value;
 	    } catch (_) {}
 	}
     };
 
     // ----------------------------------------------------------------------
-    // Model: Consists of a user,city,artist,event data
+    // Model
     // ----------------------------------------------------------------------
 
-    function Model(app) {
-	this.app = app;
+    const CURRENT_LOCATION_KEY = 'current.city';
+    const LAST_SEARCH_KEY = 'last.search';
+    const SEARCH_KEY = 'search';
+    const MILLIS_BETWEEN_SEARCHES = 1000 * 60 * 60 * 24;
+
+    function Model(storage,rdio,eventful) {
+	this.storage = storage;
+	this.rdio = rdio;
+	this.eventful = eventful;
 	this.modelChangedEvent = new EventNotifier();
 	this.lastCheckLocation = null;
-
+	this.artist = null;
+	this.location = null;
+	this.eventfulEvents = null;
     }
-
-    const CURRENT_LOCATION_KEY = 'current.city';
-    const MILLIS_BETWEEN_SEARCHES = 1000 * 60 * 60 * 24;
     
     Model.prototype = {
 
-	getModelChangedEvent: function() {
-	    return this.modelChangedEvent;
-	},
+	/** Void -> String */
+	getArtist: function() {return this.artist;},
+
+	/** Void -> String */
+	getLocation: function() {return this.location;},
+
+	/** Void -> List(EventfulEvent) */
+	getEventfulEvents: function() {return this.eventfulEvents;},
+
+	/** Void -> EventNotifier[List(Eventfulevents)] */
+	getModelChangedEvent: function() {return this.modelChangedEvent;},
 
 	invalidateCachedLocation: function() {
 	    this.lastCheckLocation = null;
@@ -278,26 +344,25 @@
 	    this.lastCheckLocation = curLocation;
 	    var loc = this.getCurrentLocation();
 	    if (!loc) return;
-	    var artist = this.app.getRdio().getArtistAndAlbum().artist;
+	    var artist = this.rdio.getArtistAndAlbum().artist;
 	    if (!artist) return;
 	    this.searchForShows(artist,loc);
 	},
 	
 	searchForShows: function(artist,loc) {
 	    log('Searching for ' + artist + ' in ' + loc);
-	    //
+
 	    // Don't search too often
-	    //
 	    var now = parseInt(+new Date());
 	    var keyForData = SEARCH_KEY + artist + location;
 	    var keyForDate = LAST_SEARCH_KEY + artist + location;
-	    var last = this.app.getStorage().get(keyForDate);
+	    var last = this.storage.get(keyForDate);
 	    if (!!last) {
 		var lastMillis = parseInt(last);
 		if (now-lastMillis < MILLIS_BETWEEN_SEARCHES) {
-		    var text = this.app.getStorage().get(keyForData);
+		    var text = this.storage.get(keyForData);
 		    if (!!text) {
-			this.processArtistText(artist,text,null,null);
+			this.processArtistText(artist,loc,text);
 		    } else {
 			log('Searching too soon');
 		    }
@@ -305,39 +370,44 @@
 		}
 	    }
 	    var thiz = this;
-	    this.app.getEventful().search(
+	    this.eventful.search(
 		artist,loc,
 		(function() {
 		    var _artist = artist;
+		    var _loc = loc;
 		    var _keyForDate = keyForDate;
 		    var _keyForData = keyForData;
 		    return function(text) {
-			thiz.processArtistText(_artist,text,
-					       _keyForDate,_keyForData);
+			thiz.saveDataAndprocessArtistText(
+			    _artist,_loc,text,_keyForDate,_keyForData);
 		    }
 		})()
 	    );
 	},
 
-	processArtistText: function(artist,text,keyForDate,keyForData) {
-	    log('processArtistText for ' + artist + ' cached=' + !keyForData);
-	    if (!!keyForDate) {
-		this.app.getStorage().set(keyForDate,parseInt(+new Date()));
-	    }
-	    if (!!keyForDate) {
-		log(text);
-		this.app.getStorage().set(keyForData,text);
-	    }
-	    this.modelChangedEvent.notifyListeners(text);
+	saveDataAndprocessArtistText: function(artist,location,text,
+					       keyForDate,keyForData) {
+	    this.storage.set(keyForDate,parseInt(+new Date()));
+	    this.storage.set(keyForData,text);
+	    this.processArtistText(artist,location,text);
+	},
+	
+	processArtistText: function(artist,location,text) {
+	    log('processArtistText for ' + artist + ' @ ' + location);
+	    this.artist = artist;
+	    this.location = location;
+	    this.eventfulEvents = 
+		this.eventful.parseEventfulEventsFromText(text);
+	    this.modelChangedEvent.notifyListeners(this.eventfulEvents);
 	},
 
 	getCurrentLocation: function() {
-	    var loc = this.app.getRdio().findCurrentLocation();
+	    var loc = this.rdio.findCurrentLocation();
 	    if (!!loc) {
-		this.app.getStorage().set(CURRENT_LOCATION_KEY,loc);
+		this.storage.set(CURRENT_LOCATION_KEY,loc);
 		return loc;
 	    }
-	    return this.app.getStorage().get(CURRENT_LOCATION_KEY);
+	    return this.storage.get(CURRENT_LOCATION_KEY);
 	},
 	
     };
@@ -346,25 +416,26 @@
     // Menu
     // ----------------------------------------------------------------------
 
-    function View(app) {
-	this.app = app;
-    }
-
+    function View() {}
+    
     View.prototype = {
 	
-	updateWithXMLText: function(text) {
-	    var target = document.getElementsByClassName('info_box metadata')[0];
+	/** 
+	 * List(EventfulEvent) -> Boolean
+	 *
+	 * Return false if this view wasn't ready for an update.
+	 */
+	updateWithEvents: function(events) {
+	    var target = 
+		document.getElementsByClassName('info_box metadata')[0];
 	    if (!target) {
 		// If we can't find the target node to use for dislpaying
 		// the shows, it means the page hasn't finished
 		// rendering.The way we allow this page to be processed
 		// again is by setting lastCheckLocation to null
 		log("Can't find a target node");
-		this.app.invalidateCache();
+		return false;
 	    }
-	    var xmlDoc = new DOMParser().parseFromString(text,"text/xml");	
-	    var events = xmlDoc.getElementsByTagName("event");
-	    if (!events) return;
 
 	    // The node used to display the list of shows or 'none'
 	    var div = $n('div');
@@ -387,51 +458,23 @@
 	    if (events.length == 0) {
 		$t('none',p);
 	    } else {
-
-		// Sort the events, so create a normal array from the node
-		// list and sort it according to date
-		var sortedEvents = []
-		for (var i=0; i<events.length; i++) {
-		    sortedEvents.push(events[i]);
-		}
-		sortedEvents.sort(function(e1,e2) {
-		    var start_time1 = getXMLValue(e1,'start_time');
-		    var start_time2 = getXMLValue(e2,'start_time');
-		    return start_time1 > start_time2;
-		});
-		log('Found ' + sortedEvents.length + ' events');
-		
-		for (var i=0, N=sortedEvents.length; i<N; i++) {
-		    var event = sortedEvents[i];
-		    var venue_url = getXMLValue(event,'venue_url');
-		    var venue_name = getXMLValue(event,'venue_name');
-		    var venue_address = getXMLValue(event,'venue_address');
-		    var city_name = getXMLValue(event,'city_name');
-		    var url = getXMLValue(event,'url');
-		    var start_time = getXMLValue(event,'start_time');
-		    var region_abbr = getXMLValue(event,'region_abbr');
-
-		    log('venue_url='+venue_url);
-		    log('venue_name='+venue_name);
-		    log('venue_address='+venue_address);
-		    log('city_name='+city_name);
-		    log('url='+url);
-		    log('start_time='+start_time);
-		    log('region_abbr='+region_abbr);
-
+		for (var i in events) {
+		    var e = events[i];
+		    if (i > 0) br(p);
 		    var newEl = $n('div',p);
+		    newEl.className = 'info_text';
 		    var newTitle = $n('a',newEl);
-		    newTitle.innerHTML = venue_name;
-		    newTitle.href = url;
+		    newTitle.innerHTML = e.venue_name;
+		    newTitle.href = e.url;
 		    br(newEl);
-		    var newLoc = city_name;
-		    if (!!region_abbr) newLoc += ', ' + region_abbr;
+		    var newLoc = e.city_name;
+		    if (!!e.region_abbr) newLoc += ', ' + e.region_abbr;
 		    $t(newLoc,newEl);
 		    br(newEl);
-		    $t(formatDate(start_time),newEl);
-		    if (i<N-1) br(p);
+		    $t(formatDate(e.start_time),newEl);
 		}
 	    }
+	    return true;
 	},
 	
     };
@@ -441,38 +484,24 @@
     // Main app
     // ----------------------------------------------------------------------
 
+    const CHECK_ARTIST_PERIOD = 3000;
+    const LOCAL_STORAGE_PREFIX = '*rdio.shows*';
+
     function App() {
-	this.storage = new Storage();
-	this.rdio = new Rdio(this);
-	this.eventful = new Eventful(this);
-	this.model = new Model(this);
-	this.view = new View(this);
-
+	this.model = new Model(new Storage(LOCAL_STORAGE_PREFIX),
+			       new Rdio(),
+			       new Eventful());
+	this.view = new View();
 	var thiz = this;
-
-	this.model.getModelChangedEvent().addListener(function(text) {
-	    thiz.view.updateWithXMLText(text);
-	});
+	this.model.getModelChangedEvent().addListener(
+	    function(events) {thiz.modelChanged(events);});
     }
-
+    
     App.prototype = {
-	getRdio: function() {
-	    return this.rdio;
-	},
-	getEventful: function() {
-	    return this.eventful;
-	},
-	getModel: function() {
-	    return this.model;
-	},
-	getStorage: function() {
-	    return this.storage;
-	},
-	getView: function() {
-	    return this.view;
-	},
-	invalidateCache: function() {
-	    this.model.invalidateCachedLocation();
+	modelChanged: function(events) {
+	    if (!this.view.updateWithEvents(events)) {
+		this.model.invalidateCachedLocation();
+	    }
 	},
 	start: function() {
 	    var thiz = this;
@@ -480,11 +509,8 @@
 			CHECK_ARTIST_PERIOD);
 	},
     };
-    
-    function main() {
-	new App().start();
-    }
 
-    main();
-    
+    // Main
+    new App().start();
+
 })();
