@@ -34,19 +34,6 @@
     // Misc stuff
     // ----------------------------------------------------------------------
 
-    /*
-      An EventfulEvent is a Hash
-      { 
-      String venue_url,
-      String venue_name,
-      String venue_address,
-      String city_name,
-      String url,
-      String start_time,
-      String region_abbr,
-      }
-    */
-
     function formatDate(date) {
 	var res = formatDateHelper(date);
 	log('formatDate: ' + date + ' -> ' + res);
@@ -103,8 +90,8 @@
 
     function getXMLValue(el,nodeName) {
 	var els = el.getElementsByTagName(nodeName);
-	if (!els || els.length == 0) return null;
-	var res = els[0].childNodes[0].nodeValue;
+	var res = (!els || els.length == 0) 
+	    ? null : els[0].childNodes[0].nodeValue;
 	log(nodeName + ' -> ' + res);
 	return res;
     }
@@ -167,6 +154,19 @@
     // ----------------------------------------------------------------------
     // Eventful: eventful.com interface
     // ----------------------------------------------------------------------
+
+    /*
+      An EventfulEvent is a Hash
+      { 
+      String venue_url,
+      String venue_name,
+      String venue_address,
+      String city_name,
+      String url,
+      String start_time,
+      String region_abbr,
+      }
+    */
 
     function Eventful() {}
     
