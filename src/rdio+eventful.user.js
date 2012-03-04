@@ -8,6 +8,8 @@
 
 (function() {
 
+    const TAG = 'RdioEventful';
+
     // ----------------------------------------------------------------------
     // Event notifier
     // ----------------------------------------------------------------------
@@ -119,9 +121,10 @@
 	log('ERROR: ' + msg);
     }
 
+    var logPrefix = '[' + TAG + '] ';
     function log(msg) {
 	try {
-	    console.log(msg);
+	    console.log(logPrefix + msg);
 	} catch (_) {}
     }
 
@@ -404,6 +407,7 @@
 	getCurrentLocation: function() {
 	    var loc = this.rdio.findCurrentLocation();
 	    if (!!loc) {
+		log('Have location=' + loc);
 		this.storage.set(CURRENT_LOCATION_KEY,loc);
 		return loc;
 	    }
