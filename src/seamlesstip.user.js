@@ -11,11 +11,6 @@
   const GEOLOOKUP_URL = 'http://api.wunderground.com/api/' + API_KEY + '/geolookup/q/';
   const CONDITIONS_URL = 'http://api.wunderground.com/api/' + API_KEY + '/conditions/q/';
 
-  function useWeather(data) {
-    console.log('data');
-    console.log(data);
-  }
-
   function useCoords(pos) {
     var c = pos.coords;
     var lat = c.latitude;
