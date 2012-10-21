@@ -47,7 +47,7 @@
 	var key = String(a.href);
 	var haveIt = getValue(key);
 	log('haveIt ' + key + ":" + haveIt);
-	if (!haveIt || (!!haveIt && (haveIt == TRUE || haveIt == FALSE))) {
+	if (!!haveIt && (haveIt == TRUE || haveIt == FALSE)) {
 	  if (haveIt == TRUE) {
 	    dohaveIt(a);
 	  } else {
