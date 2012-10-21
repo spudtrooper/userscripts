@@ -1,7 +1,9 @@
 // ==UserScript==
 // @name          Facebook poll
 // @namespace     http://jeffpalm.com/facebookpoll
-// @description   Finds users who like Mitt Romney
+// @description   Finds users who like a certainv value.  To change this
+//                value do the following: localStorage.setValue('check',<value>)
+//                If not set it defaults to "Mitt Romney"
 // @include       https://www.facebook.com/*
 // ==/UserScript==
 
