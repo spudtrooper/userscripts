@@ -1,5 +1,5 @@
 // ==UserScript==
-// @name          Craigslist image preview for multicraig
+// @name          Craigslist image preview for multicraig -- more here: http://www.jeffpalm.com/blog/archives/002255.html
 // @namespace     http://jeffpalm.com/multicraig
 // @description   View craigslist image previews
 // @include       http://*jeffpalm.com/multicraig/*
@@ -456,9 +456,6 @@ function getUserAgent() {
 
 function showImages() {
   note('showImages');
-  //
-  // Find all the links to listings and display the images
-  //
   links = document.getElementsByTagName("a");
   for (i=0; i<links.length; i++) {
     link = links[i];
@@ -474,11 +471,6 @@ function showImages() {
       });
     }
   }
-}
-
-function isListPage() {
-  var loc = String(document.location);
-  return loc.match(/http:\/\/\w+\.craigslist.org\/\w+\/?/);
 }
 
 function main() {
