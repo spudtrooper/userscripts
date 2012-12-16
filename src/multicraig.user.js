@@ -8,8 +8,12 @@
 const SIZE = 50;
 const MAX_RESULT = 50;
 const INTERVAL = 10 * 1000;
-
 const CLASS = "_c";
+const SPAM_EXCLUDES = [
+    /footer/i,
+    /logo/i,
+    /\.gif$/
+];
 
 /**
  * String -> Void
@@ -53,11 +57,7 @@ function insertBefore(newNode,target) {
   else parent.appendChild(newNode);  
 }
 
-const SPAM_EXCLUDES = [
-    /footer/i,
-    /logo/i,
-    /\.gif$/
-];
+
 /*
  * String -> Boolean
  * Returns whether src is a spam image or not
@@ -92,32 +92,28 @@ function newFunction(_a) {
         for (var j=0; j<m.length; j++) {
           s = m[j];
           if (!s) continue;
-          //
-          // basically a hack, but I thought this would return 
-          // an array
+
+          // XXX
           s = s.replace(/img.*src=/g,"");
           s = s.replace(/\"/g,"");
 	  if (!s.match(/^http/)) {
 	    continue;
 	  }
-	  //
+
 	  // Remove spam images
-	  //
 	  if (isSpam(s)) {
 	    note('Skipping spam: ' + s);
 	    continue;
 	  }
-	  //
+	  
 	  // Exclude repeat images
-	  //
 	  if (seen[s]) {
 	    note('Skipping repeat image: ' + s);
 	    continue;
 	  }
 	  seen[s] = true;
-          //
+
           // For the first time create the div to hold the links
-          //
           if (!div) {
             var d = $n("div",a.parentNode);
             var br = $t(" ",a.parentNode);
@@ -129,9 +125,8 @@ function newFunction(_a) {
           //
           var newA = $n("a",div);
           var img = $n("img",newA);
-	  //
+
 	  // Add an onerror listener to remove the image if it doesn't load
-	  //
 	  img.addEventListener('error',(function() {
 	    var _div = div;
 	    var _newA = newA;
@@ -143,9 +138,6 @@ function newFunction(_a) {
           img.className = CLASS;
 	  note('image s=' + s);
           img.src = s;
-          //
-          // 1.5: Don't change the height if we're keeping the aspect ratio
-          //
           img.style.width = SIZE + "px";
           img.style.height = SIZE + "px";
           newA.href = s;
@@ -162,19 +154,6 @@ function newFunction(_a) {
       }
     }
   };
-}
-
-function changeSizes() {
-  var imgs = document.getElementsByTagName("img");
-  for (var i in imgs) {
-    var img = imgs[i];
-    if (img.className != CLASS) continue;
-    //
-    // 1.5: Don't change the height if we're keeping the aspect ratio
-    //
-    img.style.width = SIZE + "px";
-    img.style.height = SIZE + "px";
-  }
 }
 
 var userAgent = null;
