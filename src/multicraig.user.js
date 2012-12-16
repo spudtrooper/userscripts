@@ -5,6 +5,10 @@
 // @include       http://*jeffpalm.com/multicraig/*
 // ==/UserScript==
 
+const SIZE = 50;
+const MAX_RESULT = 50;
+const INTERVAL = 10 * 1000;
+
 const CLASS = "_c";
 const USER_AGENTS = [
   "AmigaVoyager/3.4.4 (MorphOS/PPC native)",
@@ -276,11 +280,6 @@ const USER_AGENTS = [
   "Sqworm/2.9.85-BETA (beta_release; 20011115-775; i686-pc-linux"		     
 ];
 
-var size = 50;
-var keepAspectRatio = false;
-var maxResults = 50;
-var userAgent = null;
-
 /**
  * String -> Void
  * Logs a message
@@ -289,28 +288,6 @@ function note(msg) {
   try {
     console.log(NOTE_PREFIX + msg);
   } catch (e) {}
-}
-
-/**
- * String Object -> Object
- * Stores val as key and returns val
- */
-function setValue(key,val) {
-  var k = PREFIX + key;
-  try {
-    GM_setValue(v,val);
-  } catch (e) {
-    try {
-      localStorage.setItem(k,val);
-    } catch (e) {
-      try {
-	localStorage[k] = val;
-      } catch (e) {
-	note('can\'t setValue(' + key + ',' + val + ')');
-      }
-    }
-  }
-  return val;
 }
 
 /**
@@ -340,7 +317,7 @@ function $t(text,on) {
  */
 function insertBefore(newNode,target) {
   var parent   = target.parentNode;
-  var refChild = target; //target.nextSibling;  
+  var refChild = target;
   if(refChild) parent.insertBefore(newNode, refChild);
   else parent.appendChild(newNode);  
 }
@@ -438,13 +415,11 @@ function newFunction(_a) {
           //
           // 1.5: Don't change the height if we're keeping the aspect ratio
           //
-          if (!keepAspectRatio) {
-            img.style.width = size + "px";
-          }
-          img.style.height = size + "px";
+          img.style.width = SIZE + "px";
+          img.style.height = SIZE + "px";
           newA.href = s;
-          if (++cnt > maxResults-1) {
-            var amt = m.length-maxResults;
+          if (++cnt > MAX_RESULTS-1) {
+            var amt = m.length-MAX_RESULTS;
             if (amt != 0) {
               $t(" ...",div);
               $t(amt + " more ",div);
@@ -466,22 +441,18 @@ function changeSizes() {
     //
     // 1.5: Don't change the height if we're keeping the aspect ratio
     //
-    if (!keepAspectRatio) {
-      img.style.width = size + "px";
-    }
-    img.style.height = size + "px";
+    img.style.width = SIZE + "px";
+    img.style.height = SIZE + "px";
   }
 }
 
+var userAgent = null;
 function getUserAgent() {
   if (!userAgent) {
     userAgent = Math.floor(Math.random()*USER_AGENTS.length);
   }
   return userAgent;
 }
-
-const SKIP_CLASSNAME = '__skip__';
-const INTERVAL = 10 * 1000;
 
 function showImages() {
   note('showImages');
@@ -490,11 +461,7 @@ function showImages() {
   //
   links = document.getElementsByTagName("a");
   for (i=0; i<links.length; i++) {
-
     link = links[i];
-    if (link.className && link.className == SKIP_CLASSNAME) {
-      continue;
-    }
     if (link.href && link.href.match(/.*craigslist.org.*\/\d+\.html$/)) {
       GM_xmlhttpRequest({
 	method:"GET",
