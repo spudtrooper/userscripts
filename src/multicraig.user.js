@@ -96,24 +96,29 @@ function newFunction(_a) {
           // XXX
           s = s.replace(/img.*src=/g,"");
           s = s.replace(/\"/g,"");
+
+	  // Exclude repeat images
+	  if (seen[s]) {
+	    note('Skipping repeat image: ' + s);
+	    continue;
+	  }
+
 	  if (!s.match(/^http/)) {
+	    seen[s] = true;
 	    continue;
 	  }
 	  if (s.match(/.*\/thumb\/.*/)) {
+	    seen[s] = true;
 	    continue;
 	  }
 
 	  // Remove spam images
 	  if (isSpam(s)) {
 	    note('Skipping spam: ' + s);
+	    seen[s] = true;
 	    continue;
 	  }
 	  
-	  // Exclude repeat images
-	  if (seen[s]) {
-	    note('Skipping repeat image: ' + s);
-	    continue;
-	  }
 	  seen[s] = true;
 
           // For the first time create the div to hold the links
