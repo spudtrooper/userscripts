@@ -99,7 +99,7 @@ function newFunction(_a) {
 	  if (!s.match(/^http/)) {
 	    continue;
 	  }
-	  if (!s.match(/.*thumb.*/)) {
+	  if (s.match(/.*thumb.*/)) {
 	    continue;
 	  }
 
