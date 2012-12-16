@@ -10,6 +10,207 @@ const MAX_RESULT = 50;
 const INTERVAL = 10 * 1000;
 
 const CLASS = "_c";
+
+/**
+ * String -> Void
+ * Logs a message
+ */
+function note(msg) {
+  try {
+    console.log(NOTE_PREFIX + msg);
+  } catch (e) {}
+}
+
+/**
+ * String[tag] (Node) -> Node
+ * Creates a new node.
+ */
+function $n(tag,on) {
+  var e = document.createElement(tag);
+  if (on) on.appendChild(e);
+  return e;
+}
+
+/**
+ * String[text] (Node) -> Node
+ * Creates a new text node.
+ */
+function $t(text,on) {
+  var e = document.createTextNode(text);
+  if (on) on.appendChild(e);
+  return e;
+}
+
+/**
+ * Node Node -> Void
+ * Inserts newNode before target.
+ * http://lists.xml.org/archives/xml-dev/200201/msg00873.html
+ */
+function insertBefore(newNode,target) {
+  var parent   = target.parentNode;
+  var refChild = target;
+  if(refChild) parent.insertBefore(newNode, refChild);
+  else parent.appendChild(newNode);  
+}
+
+const SPAM_EXCLUDES = [
+    /footer/i,
+    /logo/i,
+    /\.gif$/
+];
+/*
+ * String -> Boolean
+ * Returns whether src is a spam image or not
+ */
+function isSpam(src) {
+  var excludes = SPAM_EXCLUDES;
+  for (var i in excludes) {
+    if (src.match(excludes[i])) return true;
+  }
+  return false;
+}
+
+var cnt=0;
+/*
+ * Remember the images we've seen before.  When there are duplicates
+ * it's almost definitely spam.
+*/
+var seenImages = {};
+function newFunction(_a) {
+  var a = _a;
+  var seen = seenImages;
+  return function(details) {
+    if (details.responseText) {
+      
+      if (m = details.responseText.match(/img[^>]*src=\"([^\"]+)\"/gi)) {
+        //
+        // Go thru the links
+        // div will hold the new div below the links parent
+        //
+        var div;
+        var cnt = 0;
+        for (var j=0; j<m.length; j++) {
+          s = m[j];
+          if (!s) continue;
+          //
+          // basically a hack, but I thought this would return 
+          // an array
+          s = s.replace(/img.*src=/g,"");
+          s = s.replace(/\"/g,"");
+	  if (!s.match(/^http/)) {
+	    continue;
+	  }
+	  //
+	  // Remove spam images
+	  //
+	  if (isSpam(s)) {
+	    note('Skipping spam: ' + s);
+	    continue;
+	  }
+	  //
+	  // Exclude repeat images
+	  //
+	  if (seen[s]) {
+	    note('Skipping repeat image: ' + s);
+	    continue;
+	  }
+	  seen[s] = true;
+          //
+          // For the first time create the div to hold the links
+          //
+          if (!div) {
+            var d = $n("div",a.parentNode);
+            var br = $t(" ",a.parentNode);
+            div = $n("div",a.parentNode);
+	    note('div=' + div + ':' + a.parentNode);
+          }
+          //
+          // Create the link and image and add them
+          //
+          var newA = $n("a",div);
+          var img = $n("img",newA);
+	  //
+	  // Add an onerror listener to remove the image if it doesn't load
+	  //
+	  img.addEventListener('error',(function() {
+	    var _div = div;
+	    var _newA = newA;
+	    return function(e) {
+	      _div.removeChild(_newA);
+	    };
+	  })(), true);
+
+          img.className = CLASS;
+	  note('image s=' + s);
+          img.src = s;
+          //
+          // 1.5: Don't change the height if we're keeping the aspect ratio
+          //
+          img.style.width = SIZE + "px";
+          img.style.height = SIZE + "px";
+          newA.href = s;
+          if (++cnt > MAX_RESULTS-1) {
+            var amt = m.length-MAX_RESULTS;
+            if (amt != 0) {
+              $t(" ...",div);
+              $t(amt + " more ",div);
+            }
+            break;
+          }
+          $t(" ",div);
+        }
+      }
+    }
+  };
+}
+
+function changeSizes() {
+  var imgs = document.getElementsByTagName("img");
+  for (var i in imgs) {
+    var img = imgs[i];
+    if (img.className != CLASS) continue;
+    //
+    // 1.5: Don't change the height if we're keeping the aspect ratio
+    //
+    img.style.width = SIZE + "px";
+    img.style.height = SIZE + "px";
+  }
+}
+
+var userAgent = null;
+function getUserAgent() {
+  if (!userAgent) {
+    userAgent = Math.floor(Math.random()*USER_AGENTS.length);
+  }
+  return userAgent;
+}
+
+function showImages() {
+  note('showImages');
+  links = document.getElementsByTagName("a");
+  for (i=0; i<links.length; i++) {
+    link = links[i];
+    if (link.href && link.href.match(/.*craigslist.org.*\/\d+\.html$/)) {
+      GM_xmlhttpRequest({
+	method:"GET",
+        url: link.href,
+        headers:{
+          "User-Agent": getUserAgent(),
+          "Accept":"text/html,text/monkey,text/xml,text/plain",
+        },
+        onload: newFunction(link)
+      });
+    }
+  }
+}
+
+function main() {
+  note('main');
+  setInterval(showImages,INTERVAL);
+}
+
+main();
+
 const USER_AGENTS = [
   "AmigaVoyager/3.4.4 (MorphOS/PPC native)",
   "Mozilla/5.0 (Windows; U; Windows NT 5.1; en-US) AppleWebKit/523.15 (KHTML, like Gecko, Safari/419.3)  Arora/0.3 (Change: 287 c9dfb30)",
@@ -279,204 +480,4 @@ const USER_AGENTS = [
   "Mozilla/4.0 (compatible; ICS 1.2.105)",
   "Sqworm/2.9.85-BETA (beta_release; 20011115-775; i686-pc-linux"		     
 ];
-
-/**
- * String -> Void
- * Logs a message
- */
-function note(msg) {
-  try {
-    console.log(NOTE_PREFIX + msg);
-  } catch (e) {}
-}
-
-/**
- * String[tag] (Node) -> Node
- * Creates a new node.
- */
-function $n(tag,on) {
-  var e = document.createElement(tag);
-  if (on) on.appendChild(e);
-  return e;
-}
-
-/**
- * String[text] (Node) -> Node
- * Creates a new text node.
- */
-function $t(text,on) {
-  var e = document.createTextNode(text);
-  if (on) on.appendChild(e);
-  return e;
-}
-
-/**
- * Node Node -> Void
- * Inserts newNode before target.
- * http://lists.xml.org/archives/xml-dev/200201/msg00873.html
- */
-function insertBefore(newNode,target) {
-  var parent   = target.parentNode;
-  var refChild = target;
-  if(refChild) parent.insertBefore(newNode, refChild);
-  else parent.appendChild(newNode);  
-}
-
-const SPAM_EXCLUDES = [
-    /footer/i,
-    /logo/i,
-    /\.gif$/
-];
-/*
- * String -> Boolean
- * Returns whether src is a spam image or not
- */
-function isSpam(src) {
-  var excludes = SPAM_EXCLUDES;
-  for (var i in excludes) {
-    if (src.match(excludes[i])) return true;
-  }
-  return false;
-}
-
-var cnt=0;
-/*
- * Remember the images we've seen before.  When there are duplicates
- * it's almost definitely spam.
-*/
-var seenImages = {};
-function newFunction(_a) {
-  var a = _a;
-  var seen = seenImages;
-  return function(details) {
-    if (details.responseText) {
-      
-      if (m = details.responseText.match(/img[^>]*src=\"([^\"]+)\"/gi)) {
-        //
-        // Go thru the links
-        // div will hold the new div below the links parent
-        //
-        var div;
-        var cnt = 0;
-        for (var j=0; j<m.length; j++) {
-          s = m[j];
-          if (!s) continue;
-          //
-          // basically a hack, but I thought this would return 
-          // an array
-          s = s.replace(/img.*src=/g,"");
-          s = s.replace(/\"/g,"");
-	  if (!s.match(/^http/)) {
-	    continue;
-	  }
-	  //
-	  // Remove spam images
-	  //
-	  if (isSpam(s)) {
-	    note('Skipping spam: ' + s);
-	    continue;
-	  }
-	  //
-	  // Exclude repeat images
-	  //
-	  if (seen[s]) {
-	    note('Skipping repeat image: ' + s);
-	    continue;
-	  }
-	  seen[s] = true;
-          //
-          // For the first time create the div to hold the links
-          //
-          if (!div) {
-            var d = $n("div",a.parentNode);
-            var br = $t(" ",a.parentNode);
-            div = $n("div",a.parentNode);
-	    note('div=' + div + ':' + a.parentNode);
-          }
-          //
-          // Create the link and image and add them
-          //
-          var newA = $n("a",div);
-          var img = $n("img",newA);
-	  //
-	  // Add an onerror listener to remove the image if it doesn't load
-	  //
-	  img.addEventListener('error',(function() {
-	    var _div = div;
-	    var _newA = newA;
-	    return function(e) {
-	      _div.removeChild(_newA);
-	    };
-	  })(), true);
-
-          img.className = CLASS;
-	  note('image s=' + s);
-          img.src = s;
-          //
-          // 1.5: Don't change the height if we're keeping the aspect ratio
-          //
-          img.style.width = SIZE + "px";
-          img.style.height = SIZE + "px";
-          newA.href = s;
-          if (++cnt > MAX_RESULTS-1) {
-            var amt = m.length-MAX_RESULTS;
-            if (amt != 0) {
-              $t(" ...",div);
-              $t(amt + " more ",div);
-            }
-            break;
-          }
-          $t(" ",div);
-        }
-      }
-    }
-  };
-}
-
-function changeSizes() {
-  var imgs = document.getElementsByTagName("img");
-  for (var i in imgs) {
-    var img = imgs[i];
-    if (img.className != CLASS) continue;
-    //
-    // 1.5: Don't change the height if we're keeping the aspect ratio
-    //
-    img.style.width = SIZE + "px";
-    img.style.height = SIZE + "px";
-  }
-}
-
-var userAgent = null;
-function getUserAgent() {
-  if (!userAgent) {
-    userAgent = Math.floor(Math.random()*USER_AGENTS.length);
-  }
-  return userAgent;
-}
-
-function showImages() {
-  note('showImages');
-  links = document.getElementsByTagName("a");
-  for (i=0; i<links.length; i++) {
-    link = links[i];
-    if (link.href && link.href.match(/.*craigslist.org.*\/\d+\.html$/)) {
-      GM_xmlhttpRequest({
-	method:"GET",
-        url: link.href,
-        headers:{
-          "User-Agent": getUserAgent(),
-          "Accept":"text/html,text/monkey,text/xml,text/plain",
-        },
-        onload: newFunction(link)
-      });
-    }
-  }
-}
-
-function main() {
-  note('main');
-  setInterval(showImages,INTERVAL);
-}
-
-main();
 
