@@ -16,7 +16,7 @@
 
   function keyPress(e) {
     buf >>= 8;
-    buf |= (e.keyCode % 0xff) << 16;
+    buf |= (e.keyCode & 0xff) << 16;
     if (buf == DOT_SPACE_SPACE_MASK) {
       alert('Don\'t type two spaces after a period!');
       buf = 0;
