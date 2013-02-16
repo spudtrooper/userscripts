@@ -13,7 +13,7 @@
    */
   function ajax(url,f) {
     var request = new XMLHttpRequest();
-    request.open("GET", url, true);
+    request.open('GET', url, true);
     request.onreadystatechange = function() {
       var done = 4, ok = 200, url_ = url;
       if (request.readyState == done && request.status == ok) {
@@ -110,8 +110,8 @@
 	this.numResults_++;
 	this.updateStatus_(page);
  	var listing = listingDivs[i];
- 	html += '<div id="' + listing.id + '" class="' +
- 	  listing.className + '">' + listing.innerHTML + '</div>';
+ 	html += '<div id=\'' + listing.id + '\' class=\'' +
+ 	  listing.className + '\'>' + listing.innerHTML + '</div>';
       }
       target.innerHTML += html;
     }
