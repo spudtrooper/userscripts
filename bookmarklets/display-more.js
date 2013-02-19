@@ -1,5 +1,9 @@
 /**
- * Displays all the results from various websites.
+ * Bookmarklet to expand the search results from:
+ *  - nakedapartments.com
+ *  - craigslist.org
+ *  - amazon.com
+ * More: http://www.jeffpalm.com/blog/archives/002259.html
  */
 (function() {
 
@@ -66,11 +70,81 @@
   };
 
   // ------------------------------------------------------------
+  // AmazonSearcher
+  // ------------------------------------------------------------
+  var AmazonSearcher = function() {};
+  AmazonSearcher.prototype = new Searcher();
+
+  AmazonSearcher.prototype.getName = function() {
+    return 'Amazon';
+  };
+
+  AmazonSearcher.prototype.init = function() {
+    var lastPage = this.findLastPage_();
+    if (lastPage < 0) {
+      return false;
+    }
+    this.lastPage_ = lastPage;
+    return true;
+  };
+
+  AmazonSearcher.prototype.updateListings = function(resEl) {
+    var target = this.findTarget_();
+    var resultsDiv = this.findResultsDiv_(resEl);
+    var listingDivs = resultsDiv.getElementsByClassName('rsltGrid prod');
+    if (listingDivs) {
+      var html = '';
+      for (var i=0, N=listingDivs.length; i<N; i++) {
+	this.numResults_++;
+ 	var listing = listingDivs[i];
+ 	html += '<div id=\'' + listing.id + '\' class=\'' +
+ 	  listing.className + '\'>' + listing.innerHTML + '</div>';
+      }
+      target.innerHTML += html;
+    }
+    this.numPages_++;
+  };
+
+  AmazonSearcher.prototype.findTarget_ = function() {
+    return this.findResultsDiv_(document.body);
+  };
+
+  AmazonSearcher.prototype.findResultsDiv_ = function(el) {
+    var els = el.getElementsByTagName('div');
+    for (var i = 0; i < els.length; i++) {
+      if (els[i].id == 'btfResults') {
+	return els[i];
+      }
+    }
+    return null;
+  };
+
+  AmazonSearcher.prototype.getUrl = function(page) {
+    return String(document.location).replace(/page=\d+/,'___') +
+      '&page=' + page;
+  };
+
+  AmazonSearcher.prototype.findLastPage_ = function() {
+    var lastPage = -1;
+    var as = document.getElementsByTagName('span');
+    for (var i=0; i<as.length; i++) {
+      var a = as[i];
+      if (a.className != 'pagnDisabled') continue;
+      try {
+	var page = parseInt(a.innerHTML);
+	if (page > lastPage) {
+	  lastPage = page;
+	}
+      } catch (_) {}
+    }
+    return lastPage;
+  };
+
+  // ------------------------------------------------------------
   // CraigslistSearcher
   // ------------------------------------------------------------
   var CraigslistSearcher = function() {};
   CraigslistSearcher.prototype = new Searcher();
-  CraigslistSearcher.prototype.constructor = CraigslistSearcher;
 
   CraigslistSearcher.prototype.getName = function() {
     return 'Craigslist';
@@ -83,8 +157,8 @@
     }
     var lastPage = lastPageAndLink[0];
     var lastLink = lastPageAndLink[1];
-    var template = lastLink.replace('=' + 100*(lastPage-1), 
-				    '=' + REPLACE_TOKEN);
+    var template = lastLink.replace(
+      '=' + 100*(lastPage-1), '=' + REPLACE_TOKEN);
     this.template_ = template;
     this.lastPage_ = lastPage;
     return true;
@@ -150,14 +224,13 @@
   // ------------------------------------------------------------
   // NakedApartmentsSearcher
   // ------------------------------------------------------------
-  const NAKEDAPARTMENTS_RESULTS_CLASS_NAME = 
-    'listing-results floatLeft';
-  const NAKEDAPARTMENTS_LISTING_CLASS_NAME = 
-    'listing-row listing-row-standard clearfix';
-  
   var NakedApartmentsSearcher = function() {};
   NakedApartmentsSearcher.prototype = new Searcher();
-  NakedApartmentsSearcher.prototype.constructor = NakedApartmentsSearcher;
+
+  NakedApartmentsSearcher.RESULTS_CLASS_NAME = 
+    'listing-results floatLeft';
+  NakedApartmentsSearcher.LISTING_CLASS_NAME = 
+    'listing-row listing-row-standard clearfix';
 
   NakedApartmentsSearcher.prototype.getName = function() {
     return 'NakedApartments';
@@ -180,7 +253,7 @@
     var target = this.findTarget_();
     var resultsDiv = this.findResultsDiv_(resEl);
     var listingDivs = resultsDiv.getElementsByClassName(
-      NAKEDAPARTMENTS_LISTING_CLASS_NAME);
+      NakedApartmentsSearcher.LISTING_CLASS_NAME);
     if (listingDivs) {
       var html = '';
       for (var i=0, N=listingDivs.length; i<N; i++) {
@@ -203,9 +276,9 @@
   };
 
   NakedApartmentsSearcher.prototype.findResultsDiv_ = function(el) {
-    var divs = el.getElementsByClassName(NAKEDAPARTMENTS_RESULTS_CLASS_NAME);
-    if (!divs || !divs.length || divs.length != 1) return null;
-    return divs[0];
+    var divs = el.getElementsByClassName(
+      NakedApartmentsSearcher.RESULTS_CLASS_NAME);
+    return (!divs || !divs.length || divs.length != 1) ? null : divs[0];
   };
 
   /** @return [lastPage:number, lastLink:string] */
@@ -243,6 +316,7 @@
     div.innerHTML = text;
     this.searcher_.updateListings(div);
     this.display_.updateStatus(this.searcher_, page);
+    div.innerHTML = '';
   };
     
   Controller.prototype.search_ = function(page) {
@@ -364,15 +438,15 @@
     log('Trying to find searcher for ' + loc);
     var regexpsToSearchers = {};
     regexpsToSearchers['nakedapartments\.com\/.*\/search'] = 
-      function() {return new NakedApartmentsSearcher();};
+      NakedApartmentsSearcher;
     regexpsToSearchers['craigslist\.org.*\/search.*altView=imggrid'] = 
-      function() {return new CraigslistSearcher();};
+      CraigslistSearcher;
+    regexpsToSearchers['amazon.com\/s.*'] = 
+      AmazonSearcher;
     
     for (var regexp in regexpsToSearchers) {
-      log(' - trying ' + regexp);
       if (loc.match(new RegExp(regexp))) {
-	log(' - found a match for ' + regexp);
-	return regexpsToSearchers[regexp]();
+	return new regexpsToSearchers[regexp]();
       }
     }
     return null;
