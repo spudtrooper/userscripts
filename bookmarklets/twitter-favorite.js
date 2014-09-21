@@ -1,6 +1,8 @@
 /*
  * Bookmarklet to periodically favorite all the tweets on a page.
- * Copy bookmarklet from here: http://jsfiddle.net/p2VsT/
+ *
+ * Usage: Copy the link "Favorite tweets" from http://jsfiddle.net/p2VsT/ to your 
+ * toolbar and click when on a page you want to monitor.
  */
 (function() {
 
@@ -24,15 +26,15 @@
     }
     var favoriteSpan = spans[0];
     var style = window.getComputedStyle(favoriteSpan);
-    var color = String(style.color).replace(' ','').trim();
+    var color = String(style.color).replace(' ','');
     if (color == unfavoritedColor) {
       click(favoriteSpan);
     }
   }
 
   function click(li) {
-    var evt = document.createEvent("MouseEvents");
-    evt.initMouseEvent("click", true, true, window, 1, 0, 0, 0, 0,
+    var evt = document.createEvent('MouseEvents');
+    evt.initMouseEvent('click', true, true, window, 1, 0, 0, 0, 0,
 		       false, false, false, false, 0, null);
     li.dispatchEvent(evt);
   }
