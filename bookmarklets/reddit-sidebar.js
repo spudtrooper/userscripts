@@ -1,10 +1,16 @@
 (function() {
-  /**
+  /*
    * Bookmarklet to view reddit with a sidebar, so you don't have to use tabs.
    *
    * jsfiddle: http://jsfiddle.net/h0s9jnds/
    * screen shot: http://imgur.com/rdDTTnq
    */
+
+  /**
+   * Thing ::=
+   *   { el: Element, a: Element, url: string}
+   */
+
   function findTitleA(el) {
     var els = el.getElementsByTagName('a');
     for (var i = 0; i < els.length; i++) {
@@ -20,6 +26,7 @@
     window.console && window.console.log(msg);
   }
 
+  /** Returns an array of Thing. */
   function findThings() {
     var els = document.getElementsByTagName('div');
     var things = [];
@@ -42,6 +49,26 @@
     parent.appendChild(el);
     return el;
   }
+
+  Clicker = function(iframe) {
+    /** @private {!Element} */
+    this.iframe_ = iframe;
+
+    /** @private {{el: !Element, style: !Object}} */
+    this.lastClicked_ = null;
+  };
+
+  Clicker.prototype.clickThing = function(thing) {
+    this.iframe_.src = thing.url;
+    // Restore the previously-clicked link.
+    if (this.lastClicked_) {
+      this.lastClicked_.el.style.background = this.lastClicked_.elBackground;
+    }
+    // Set the new style.
+    var el = thing.el;
+    this.lastClicked_ = {el: el, elBackground: el.style.background};
+    el.style.background = '#ddd';
+  };
 
   function main() {
     var things = findThings();
@@ -72,6 +99,8 @@
     iframe.style.height = '100%';
     sidebarEl.style.overflow = 'both';
 
+    var clicker = new Clicker(iframe);
+
     for (var i = 0; i < things.length; i++) {
       var thing = things[i];
       var el = thing.el;
@@ -83,10 +112,10 @@
       newA.href = '#';
       a.parentNode.replaceChild(newA, a);
       (function() {
-	var href = thing.url;
+	var thing_ = thing;
 	newA.addEventListener("click", 
 			   function(e) {
-			     iframe.src = href;
+			     clicker.clickThing(thing_);
 			     return true;
 			   },
 			   true);
