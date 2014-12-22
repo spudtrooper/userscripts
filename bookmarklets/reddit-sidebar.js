@@ -2,7 +2,7 @@
   /*
    * Bookmarklet to view reddit with a sidebar, so you don't have to use tabs.
    *
-   * jsfiddle: http://jsfiddle.net/h0s9jnds/
+   * jsfiddle: http://jsfiddle.net/j6g34vzn/
    * screen shot: http://imgur.com/rdDTTnq
    */
 
@@ -96,7 +96,9 @@
 
     var iframe = newNode('iframe', mainEl);
     iframe.style.width = '100%';
-    iframe.style.height = '100%';
+    //XXX height: 100% isn't working anymore, so pin the height to 
+    //XXX  window.innerHeight.
+    iframe.style.height = window.innerHeight + 'px';
     sidebarEl.style.overflow = 'both';
 
     var clicker = new Clicker(iframe);
